@@ -1700,9 +1700,7 @@ initFrame:SetScript("OnEvent", function(self)
                 if not EllesmereUIDB then EllesmereUIDB = {} end
                 EllesmereUIDB.showRestedIndicator = v
                 local pf = _G["EllesmereUIUnitFrames_Player"]
-                if pf and pf._restIndicator then
-                    if v and IsResting() then pf._restIndicator:Show() else pf._restIndicator:Hide() end
-                end
+                if pf and pf._restUpdate then pf._restUpdate() end
                 EllesmereUI:RefreshPage()
               end },
             { type="toggle", text="Target Distance (Range) Text",
@@ -1723,19 +1721,23 @@ initFrame:SetScript("OnEvent", function(self)
             local leftRgn = restedRow._leftRegion
             local function ApplyRestIndicatorPos()
                 local pf = _G["EllesmereUIUnitFrames_Player"]
-                if pf and pf._restIndicator then
-                    pf._restIndicator:ClearAllPoints()
-                    local rx = (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0
-                    local ry = (EllesmereUIDB and EllesmereUIDB.restedIndicatorYOffset) or 0
-                    pf._restIndicator:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
-                end
+                if pf and pf._restPlace then pf._restPlace() end
             end
             local function restOff()
                 return not EllesmereUIDB or EllesmereUIDB.showRestedIndicator ~= true
             end
             EllesmereUI.BuildInlineCog(leftRgn, {
-                title = "Rested Indicator Position",
+                title = "Rested Indicator Settings",
                 rows = {
+                    { type="toggle", label="Animated",
+                      tooltip="Shows the animated rest icon from Blizzard's player frame instead of the ZZZ text.",
+                      get=function() return EllesmereUIDB and EllesmereUIDB.restedIndicatorAnimated == true or false end,
+                      set=function(v)
+                          if not EllesmereUIDB then EllesmereUIDB = {} end
+                          EllesmereUIDB.restedIndicatorAnimated = v
+                          local pf = _G["EllesmereUIUnitFrames_Player"]
+                          if pf and pf._restUpdate then pf._restUpdate() end
+                      end },
                     { type="slider", label="X Offset", min=-50, max=50, step=1,
                       get=function() return (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0 end,
                       set=function(v)

@@ -1145,6 +1145,10 @@ initFrame:SetScript("OnEvent", function(self)
         -- Show Blizzard Elements | Scroll to Zoom
         local blizzElements = {
             { key = "calendar",   label = "Calendar",       hideKey = "hideGameTime" },
+            -- Checked = on: stored as is (direct), off by default.
+            { key = "calendarInvites", label = "Calendar Invites", hideKey = "calendarInvites", direct = true,
+              lockedFn = function() local m = MinimapDB(); return (m and m.hideGameTime) or false end,
+              lockedTooltip = "Requires Calendar to be shown." },
             { key = "mail",       label = "Mail",           hideKey = "hideMail" },
             { key = "tracking",   label = "Tracking",       hideKey = "hideTrackingButton" },
             { key = "crafting",   label = "Crafting Order", hideKey = "hideCraftingOrder" },

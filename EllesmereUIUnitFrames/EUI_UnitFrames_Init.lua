@@ -178,7 +178,8 @@ local function InitializeFrames()
     -- (Combat indicator overlay moved below the target/focus spawns -- the
     -- target frame does not exist yet at this point in the setup.)
 
-    -- Rested indicator ("ZZZ") on player health bar top-left
+    -- Rested indicator on player health bar top-left: "ZZZ" text, or
+    -- Blizzard's animated player frame rest icon when Animated is on.
     do
         local pf = frames.player
         if pf and pf.Health then
@@ -189,29 +190,57 @@ local function InitializeFrames()
                 restText:SetTextColor(1, 1, 1)
                 restText:SetText("ZZZ")
                 restText:Hide()
+                pf._restText = restText
+
+                -- Same art and timing as Blizzard's PlayerRestLoop: a 6 x 7 flipbook, 42 frames in 1.5s.
+                local restAnim = CreateFrame("Frame", nil, pf._restHolder)
+                restAnim:SetSize(24, 24)
+                restAnim:Hide()
+                local restTex = restAnim:CreateTexture(nil, "OVERLAY")
+                restTex:SetAllPoints(restAnim)
+                restTex:SetAtlas("UI-HUD-UnitFrame-Player-Rest-Flipbook")
+                local loop = restAnim:CreateAnimationGroup()
+                loop:SetLooping("REPEAT")
+                local flip = loop:CreateAnimation("FlipBook")
+                flip:SetTarget(restTex)
+                flip:SetDuration(1.5)
+                flip:SetFlipBookRows(7)
+                flip:SetFlipBookColumns(6)
+                flip:SetFlipBookFrames(42)
+                flip:SetFlipBookFrameWidth(0)
+                flip:SetFlipBookFrameHeight(0)
+                restAnim:SetScript("OnShow", function() loop:Play() end)
+                restAnim:SetScript("OnHide", function() loop:Stop() end)
+                pf._restAnim = restAnim
+
+                -- Shows the style the settings pick (or neither) and hides the other.
+                pf._restUpdate = function()
+                    local db = EllesmereUIDB
+                    local on = db and db.showRestedIndicator == true and IsResting()
+                    local animated = db and db.restedIndicatorAnimated == true
+                    pf._restText:SetShown(on and not animated or false)
+                    pf._restAnim:SetShown(on and animated or false)
+                end
                 pf._restIndicator = restText
+                -- Places both styles at the X/Y offsets of the position cog.
+                pf._restPlace = function()
+                    local rx = (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0
+                    local ry = (EllesmereUIDB and EllesmereUIDB.restedIndicatorYOffset) or 0
+                    pf._restText:ClearAllPoints()
+                    pf._restText:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
+                    pf._restAnim:ClearAllPoints()
+                    pf._restAnim:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
+                end
 
                 pf._restEventFrame = CreateFrame("Frame", nil, pf)
                 pf._restEventFrame:RegisterEvent("PLAYER_UPDATE_RESTING")
                 pf._restEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-                pf._restEventFrame:SetScript("OnEvent", function()
-                    local enabled = EllesmereUIDB and EllesmereUIDB.showRestedIndicator == true
-                    if enabled and IsResting() then
-                        pf._restIndicator:Show()
-                    else
-                        pf._restIndicator:Hide()
-                    end
-                end)
+                pf._restEventFrame:SetScript("OnEvent", function() pf._restUpdate() end)
             end
             pf._restHolder:SetAllPoints(pf.Health)
             pf._restHolder:SetFrameLevel(pf.Health:GetFrameLevel() + 5)
-            pf._restIndicator:ClearAllPoints()
-            local rxOff = (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0
-            local ryOff = (EllesmereUIDB and EllesmereUIDB.restedIndicatorYOffset) or 0
-            pf._restIndicator:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rxOff, -2 + ryOff)
-
-            local restEnabled = EllesmereUIDB and EllesmereUIDB.showRestedIndicator == true
-            if restEnabled and IsResting() then pf._restIndicator:Show() else pf._restIndicator:Hide() end
+            pf._restPlace()
+            pf._restUpdate()
         end
     end
 

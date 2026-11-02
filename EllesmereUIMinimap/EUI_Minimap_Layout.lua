@@ -135,6 +135,41 @@ local function BuildCustomIndicators(minimap)
         EllesmereUI.HideWidgetTooltip()
     end)
 
+    -- Pending invite alert (Calendar Invites in Show Blizzard Elements): the
+    -- pulsing notice Blizzard's own calendar button shows, which ours replaces.
+    -- Shown by SyncCalendarInvites while C_Calendar reports pending invites.
+    do
+        local cal = _customIndicators.calendar
+        -- Own child frame, so the pulse fades only the notice, never the day icon.
+        local invite = CreateFrame("Frame", nil, cal)
+        invite:SetAllPoints(cal)
+        invite:SetFrameLevel(cal:GetFrameLevel() + 2)
+        invite:Hide()
+        local glow = invite:CreateTexture(nil, "OVERLAY", nil, 1)
+        glow:SetTexture("Interface\\Calendar\\EventNotificationGlow")
+        glow:SetBlendMode("ADD")
+        glow:SetPoint("TOPLEFT", invite, "TOPLEFT", -6, 6)
+        glow:SetPoint("BOTTOMRIGHT", invite, "BOTTOMRIGHT", 6, -6)
+        local notice = invite:CreateTexture(nil, "OVERLAY", nil, 2)
+        notice:SetTexture("Interface\\Calendar\\EventNotification")
+        notice:SetTexCoord(0.03125, 0.6484375, 0.03125, 0.8671875)
+        notice:SetAllPoints(invite)
+        -- Fade out and back in, a full cycle every two seconds.
+        local pulse = invite:CreateAnimationGroup()
+        pulse:SetLooping("BOUNCE")
+        local fade = pulse:CreateAnimation("Alpha")
+        fade:SetFromAlpha(1)
+        fade:SetToAlpha(0)
+        fade:SetDuration(1)
+        fade:SetSmoothing("IN_OUT")
+        cal._invite = invite
+        cal._invitePulse = pulse
+
+        invite:RegisterEvent("CALENDAR_UPDATE_PENDING_INVITES")
+        invite:RegisterEvent("PLAYER_ENTERING_WORLD")
+        invite:SetScript("OnEvent", function() I.SyncCalendarInvites() end)
+    end
+
     -- Mail (informational: tooltip + hover atlas only)
     _customIndicators.mail = CreateIndicatorBtn("_mail", minimap,
         "UI-HUD-Minimap-Mail-Up", "UI-HUD-Minimap-Mail-Mouseover", nil, nil)
@@ -144,7 +179,13 @@ local function BuildCustomIndicators(minimap)
         if EBS._HVRevealMapHover then EBS._HVRevealMapHover() end
         if mailBaseEnter then mailBaseEnter(self) end
         if not GetFFD(self).freeMoveJustDragged and EllesmereUI.ShowWidgetTooltip then
-            EllesmereUI.ShowWidgetTooltip(self, HAVE_MAIL or "New Mail", { anchor = EBS._Grow.TT(), scale = GetCustomTooltipScale() })
+            -- Up to three latest senders, as Blizzard's own mail icon lists them.
+            local senders = GetLatestThreeSenders and { GetLatestThreeSenders() } or {}
+            local label = HAVE_MAIL or "New Mail"
+            if #senders > 0 then
+                label = (HAVE_MAIL_FROM or "Unread mail from:") .. "\n" .. table.concat(senders, "\n")
+            end
+            EllesmereUI.ShowWidgetTooltip(self, label, { anchor = EBS._Grow.TT(), scale = GetCustomTooltipScale() })
         end
     end)
     _customIndicators.mail:SetScript("OnLeave", function(self)
@@ -257,7 +298,26 @@ local function HideBlizzardIndicators()
     end
 end
 
+local function SyncCalendarInvites()
+    local cal = _customIndicators.calendar
+    if not (cal and cal._invite) then return end
+    local mp = EBS.db and EBS.db.profile.minimap
+    local pending = 0
+    if mp and mp.calendarInvites == true and C_Calendar and C_Calendar.GetNumPendingInvites then
+        pending = C_Calendar.GetNumPendingInvites() or 0
+    end
+    local show = pending > 0
+    cal._invite:SetShown(show)
+    if show then
+        if not cal._invitePulse:IsPlaying() then cal._invitePulse:Play() end
+    else
+        cal._invitePulse:Stop()
+    end
+end
+I.SyncCalendarInvites = SyncCalendarInvites
+
 local function SyncIndicatorVisibility()
+    SyncCalendarInvites()
     local indicator = MinimapCluster and MinimapCluster.IndicatorFrame
     if _customIndicators.mail then
         local hasMail = false
