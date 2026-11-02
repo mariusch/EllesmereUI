@@ -1727,7 +1727,7 @@ initFrame:SetScript("OnEvent", function(self)
                 return not EllesmereUIDB or EllesmereUIDB.showRestedIndicator ~= true
             end
             EllesmereUI.BuildInlineCog(leftRgn, {
-                title = "Rested Indicator Settings",
+                title = "Rested Indicator Position",
                 rows = {
                     { type="toggle", label="Animated",
                       tooltip="Shows the animated rest icon from Blizzard's player frame instead of the ZZZ text.",

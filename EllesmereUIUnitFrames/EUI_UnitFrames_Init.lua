@@ -192,44 +192,36 @@ local function InitializeFrames()
                 restText:Hide()
                 pf._restText = restText
 
-                -- Same art and timing as Blizzard's PlayerRestLoop: a 6 x 7 flipbook, 42 frames in 1.5s.
-                local restAnim = CreateFrame("Frame", nil, pf._restHolder)
-                restAnim:SetSize(24, 24)
-                restAnim:Hide()
-                local restTex = restAnim:CreateTexture(nil, "OVERLAY")
-                restTex:SetAllPoints(restAnim)
-                restTex:SetAtlas("UI-HUD-UnitFrame-Player-Rest-Flipbook")
-                local loop = restAnim:CreateAnimationGroup()
-                loop:SetLooping("REPEAT")
-                local flip = loop:CreateAnimation("FlipBook")
-                flip:SetTarget(restTex)
-                flip:SetDuration(1.5)
-                flip:SetFlipBookRows(7)
-                flip:SetFlipBookColumns(6)
-                flip:SetFlipBookFrames(42)
-                flip:SetFlipBookFrameWidth(0)
-                flip:SetFlipBookFrameHeight(0)
-                restAnim:SetScript("OnShow", function() loop:Play() end)
-                restAnim:SetScript("OnHide", function() loop:Stop() end)
-                pf._restAnim = restAnim
-
-                -- Shows the style the settings pick (or neither) and hides the other.
-                pf._restUpdate = function()
-                    local db = EllesmereUIDB
-                    local on = db and db.showRestedIndicator == true and IsResting()
-                    local animated = db and db.restedIndicatorAnimated == true
-                    pf._restText:SetShown(on and not animated or false)
-                    pf._restAnim:SetShown(on and animated or false)
-                end
-                pf._restIndicator = restText
-                -- Places both styles at the X/Y offsets of the position cog.
-                pf._restPlace = function()
+                local function PlaceRest(region)
                     local rx = (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0
                     local ry = (EllesmereUIDB and EllesmereUIDB.restedIndicatorYOffset) or 0
-                    pf._restText:ClearAllPoints()
-                    pf._restText:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
-                    pf._restAnim:ClearAllPoints()
-                    pf._restAnim:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
+                    region:ClearAllPoints()
+                    region:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
+                end
+                -- Places the text, and the animated icon once built, at the cog's X/Y offsets.
+                pf._restPlace = function()
+                    PlaceRest(pf._restText)
+                    if pf._restAnim then PlaceRest(pf._restAnim) end
+                end
+
+                -- Shows the style the settings pick (or neither) and hides the other.
+                -- The animated icon is built the first time it is needed.
+                pf._restUpdate = function()
+                    local db = EllesmereUIDB
+                    local on = db and db.showRestedIndicator == true and IsResting() or false
+                    local animated = db and db.restedIndicatorAnimated == true or false
+                    if on and animated and not pf._restAnim then
+                        local restAnim = CreateFrame("Frame", nil, pf._restHolder)
+                        restAnim:SetSize(24, 24)
+                        restAnim:Hide()
+                        local restTex = restAnim:CreateTexture(nil, "OVERLAY")
+                        restTex:SetAllPoints(restAnim)
+                        EllesmereUI.AddRestFlipbook(restAnim, restTex)
+                        pf._restAnim = restAnim
+                        PlaceRest(restAnim)
+                    end
+                    pf._restText:SetShown(on and not animated)
+                    if pf._restAnim then pf._restAnim:SetShown(on and animated) end
                 end
 
                 pf._restEventFrame = CreateFrame("Frame", nil, pf)
