@@ -198,10 +198,16 @@ local function InitializeFrames()
                     region:ClearAllPoints()
                     region:SetPoint("TOPLEFT", pf.Health, "TOPLEFT", 3 + rx, -2 + ry)
                 end
-                -- Places the text, and the animated icon once built, at the cog's X/Y offsets.
+                -- Places the text, and the animated icon once built, at the cog's X/Y
+                -- offsets (and the icon at its Size).
                 pf._restPlace = function()
                     PlaceRest(pf._restText)
-                    if pf._restAnim then PlaceRest(pf._restAnim) end
+                    local a = pf._restAnim
+                    if a then
+                        local size = (EllesmereUIDB and EllesmereUIDB.restedIndicatorAnimatedSize) or 24
+                        a:SetSize(size, size)
+                        PlaceRest(a)
+                    end
                 end
 
                 -- Shows the style the settings pick (or neither) and hides the other.
@@ -211,14 +217,17 @@ local function InitializeFrames()
                     local on = db and db.showRestedIndicator == true and IsResting() or false
                     local animated = db and db.restedIndicatorAnimated == true or false
                     if on and animated and not pf._restAnim then
-                        local restAnim = CreateFrame("Frame", nil, pf._restHolder)
-                        restAnim:SetSize(24, 24)
+                        -- On the unit frame, not the health bar: the bar sits in the frame's
+                        -- bar clip, which would cut off the z's as they float up past its edge.
+                        -- Its level keeps it above that clip, which draws as one group.
+                        local restAnim = CreateFrame("Frame", nil, pf)
+                        restAnim:SetFrameLevel(((pf._barClip or pf):GetFrameLevel()) + 10)
                         restAnim:Hide()
                         local restTex = restAnim:CreateTexture(nil, "OVERLAY")
                         restTex:SetAllPoints(restAnim)
                         EllesmereUI.AddRestFlipbook(restAnim, restTex)
                         pf._restAnim = restAnim
-                        PlaceRest(restAnim)
+                        pf._restPlace()
                     end
                     pf._restText:SetShown(on and not animated)
                     if pf._restAnim then pf._restAnim:SetShown(on and animated) end

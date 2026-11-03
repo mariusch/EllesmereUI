@@ -1737,6 +1737,16 @@ initFrame:SetScript("OnEvent", function(self)
                           EllesmereUIDB.restedIndicatorAnimated = v
                           local pf = _G["EllesmereUIUnitFrames_Player"]
                           if pf and pf._restUpdate then pf._restUpdate() end
+                          EllesmereUI:RefreshPage()
+                      end },
+                    { type="slider", label="Size", min=12, max=64, step=1,
+                      disabled=function() return not (EllesmereUIDB and EllesmereUIDB.restedIndicatorAnimated == true) end,
+                      disabledTooltip="Animated",
+                      get=function() return (EllesmereUIDB and EllesmereUIDB.restedIndicatorAnimatedSize) or 24 end,
+                      set=function(v)
+                          if not EllesmereUIDB then EllesmereUIDB = {} end
+                          EllesmereUIDB.restedIndicatorAnimatedSize = v
+                          ApplyRestIndicatorPos()
                       end },
                     { type="slider", label="X Offset", min=-50, max=50, step=1,
                       get=function() return (EllesmereUIDB and EllesmereUIDB.restedIndicatorXOffset) or 0 end,
