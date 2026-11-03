@@ -97,8 +97,6 @@ local defaults = {
             -- decision 2026-09-21); a profile that never touched the row gains the button.
             hideTrackingButton   = false,
             hideGameTime         = false,
-            -- Pulsing notice on the calendar button while calendar invites are pending (off by default).
-            calendarInvites      = false,
             hideMail             = false,
             -- Mail indicator: "button" = element row, or a map corner (TOPLEFT/TOPRIGHT/BOTTOMLEFT/BOTTOMRIGHT) pinned like Omnium Folio's, nudged by X/Y offsets.
             mailPosition         = "button",

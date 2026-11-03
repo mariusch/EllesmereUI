@@ -52,7 +52,7 @@ I.clockBgSetters[#I.clockBgSetters + 1] = function(v) clockBg = v end
 -- at load: a file behind this one would have to import the function.
 local MO_Evaluate
 
--- Calendar Invites alert: defined below BuildCustomIndicators, which calls them.
+-- Calendar invite alert: defined below BuildCustomIndicators, which calls them.
 local SyncCalendarInvites, DismissCalendarInvites
 
 -- The Great Vault and M+ Portal buttons, built in BuildCustomIndicators.
@@ -275,12 +275,12 @@ local function HideBlizzardIndicators()
 end
 
 -------------------------------------------------------------------------------
---  Calendar Invites (Show Blizzard Elements, off by default): the pulsing
---  notice Blizzard's own calendar button shows for pending invites, which our
---  button replaces. Same rules as Blizzard's: it shows when the pending count
+--  Calendar invite alert: the pulsing notice Blizzard's own calendar button
+--  shows for pending invites, which our button replaces, so it is on whenever
+--  Calendar is shown. Same rules as Blizzard's: it shows when the pending count
 --  rises while the calendar is closed, clicking the button dismisses it until
 --  another invite arrives, and it clears once no invite is pending.
---  Zero cost while off: the event frame stays inert and the notice is built on
+--  With Calendar hidden the event frame stays inert; the notice is built on
 --  first show.
 -------------------------------------------------------------------------------
 local _inviteEvents = CreateFrame("Frame")
@@ -321,8 +321,7 @@ SyncCalendarInvites = function()
     local cal = _customIndicators.calendar
     if not cal then return end
     local mp = EBS.db and EBS.db.profile.minimap
-    if not (mp and mp.calendarInvites == true and not mp.hideGameTime
-            and C_Calendar and C_Calendar.GetNumPendingInvites) then
+    if not (mp and not mp.hideGameTime and C_Calendar and C_Calendar.GetNumPendingInvites) then
         _inviteEvents:UnregisterAllEvents()
         _inviteSeen = 0
         SetInviteShown(cal, false)
