@@ -155,9 +155,9 @@ local function BuildCustomIndicators(minimap)
         if mailBaseEnter then mailBaseEnter(self) end
         if not GetFFD(self).freeMoveJustDragged and EllesmereUI.ShowWidgetTooltip then
             local label = HAVE_MAIL or "New Mail"
-            -- Mail Senders (opt-in): up to three latest senders, as Blizzard's mail icon lists them.
-            local mp = EBS.db and EBS.db.profile.minimap
-            local senders = (mp and mp.mailSenders == true and GetLatestThreeSenders) and { GetLatestThreeSenders() } or nil
+            -- Up to three latest senders, as Blizzard's own mail icon lists them
+            -- (our button replaces it, so without this the names are lost).
+            local senders = GetLatestThreeSenders and { GetLatestThreeSenders() } or nil
             if senders and #senders > 0 then
                 label = (HAVE_MAIL_FROM or "Unread mail from:") .. "\n" .. table.concat(senders, "\n")
             end

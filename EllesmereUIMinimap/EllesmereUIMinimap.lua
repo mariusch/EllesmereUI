@@ -102,8 +102,6 @@ local defaults = {
             hideMail             = false,
             -- Mail indicator: "button" = element row, or a map corner (TOPLEFT/TOPRIGHT/BOTTOMLEFT/BOTTOMRIGHT) pinned like Omnium Folio's, nudged by X/Y offsets.
             mailPosition         = "button",
-            -- Mail tooltip lists the latest three senders (off by default).
-            mailSenders          = false,
             mailOffsetX          = 0,
             mailOffsetY          = 0,
             hideRaidDifficulty   = false,
